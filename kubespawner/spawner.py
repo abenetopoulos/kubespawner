@@ -1030,3 +1030,18 @@ class KubeSpawner(Spawner):
                 args[i] = '--hub-api-url="%s"' % (self.accessible_hub_api_url)
                 break
         return args
+
+    @gen.coroutine
+    def delete_volume_claim(self):
+        try:
+            yield self.asynchronize(
+                self.api.delete_namespaced_persistent_volume_claim,
+                name=self.pvc_name,
+                namespace=self.namespace,
+                body=client.V1DeleteOptions()
+            )
+        except ApiException as e:
+            if e.status == 404:
+                self.log.info("No PVC with name " + self.pvc_name + " was found in the current namespace.")
+            else:
+                raise
